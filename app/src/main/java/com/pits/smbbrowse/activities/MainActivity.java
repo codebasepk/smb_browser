@@ -140,7 +140,11 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             SmbFile file = getItem(position);
             holder.title.setText(file.getName());
             try {
-                holder.size.setText(String.valueOf((double) file.length() / 100000) + "mb");
+                if (file.isFile()) {
+                    holder.size.setText(String.valueOf((double) file.length() / 100000) + "mb");
+                } else {
+                    holder.size.setText(file.list().length + " Items");
+                }
             } catch (SmbException e) {
                 e.printStackTrace();
             }
