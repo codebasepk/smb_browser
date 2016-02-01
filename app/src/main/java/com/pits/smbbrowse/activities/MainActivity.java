@@ -1,4 +1,4 @@
-package com.pits.smbbrowse;
+package com.pits.smbbrowse.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.pits.smbbrowse.activities.LoginActivity;
+import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;

@@ -7,7 +7,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.pits.smbbrowse.MainActivity;
 import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.utils.AppGlobals;
 
