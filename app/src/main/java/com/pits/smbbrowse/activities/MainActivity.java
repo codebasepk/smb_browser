@@ -1,30 +1,30 @@
 package com.pits.smbbrowse.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.pits.smbbrowse.R;
+import com.pits.smbbrowse.tasks.FileRenameTask;
 import com.pits.smbbrowse.utils.AppGlobals;
+import com.pits.smbbrowse.utils.Constants;
+import com.pits.smbbrowse.adapters.ContentListAdapter;
 import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
 
 import java.net.MalformedURLException;
+import java.util.List;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
+
+import static android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class MainActivity extends AppCompatActivity implements ListView.OnItemClickListener {
 
@@ -43,10 +43,9 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             return;
         }
 
-        String username = AppGlobals.getUsername();
-        String password = AppGlobals.getPassword();
         mSambaShare = AppGlobals.getSambaHostAddress();
-        mAuth = new NtlmPasswordAuthentication("", username, password);
+        mAuth = Helpers.getAuthenticationCredentials();
+
         mListView = (ListView) findViewById(R.id.content_list);
         mListView.setOnItemClickListener(this);
 
@@ -55,10 +54,12 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             public void run() {
                 try {
                     SmbFile directory = new SmbFile(mSambaShare, mAuth);
+                    SmbFile[] files = directory.listFiles();
+                    List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
                     final ContentListAdapter adapter = new ContentListAdapter(
                             getApplicationContext(),
                             R.layout.list_row,
-                            directory.listFiles()
+                            filteredFiles
                     );
                     runOnUiThread(new Runnable() {
                         @Override
@@ -81,8 +82,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
         try {
             if (file.isFile()) {
-                Toast.makeText(
-                        getApplicationContext(), "Cannot browse a file", Toast.LENGTH_LONG).show();
+                UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
             } else {
                 mListView.setAdapter(null);
                 new Thread(new Runnable() {
@@ -90,10 +90,12 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                     public void run() {
                         try {
                             SmbFile directory = new SmbFile(file.getCanonicalPath(), mAuth);
+                            SmbFile[] files = directory.listFiles();
+                            List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
                             final ContentListAdapter adapter = new ContentListAdapter(
                                     getApplicationContext(),
                                     R.layout.list_row,
-                                    directory.listFiles()
+                                    filteredFiles
                             );
                             runOnUiThread(new Runnable() {
                                 @Override
@@ -117,82 +119,40 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
     }
 
-    private class ContentListAdapter extends ArrayAdapter<SmbFile> {
-
-        public ContentListAdapter(Context context, int resource, SmbFile[] objects) {
-            super(context, resource, objects);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            ViewHolder holder;
-            if (convertView == null) {
-                LayoutInflater inflater = getLayoutInflater();
-                convertView = inflater.inflate(R.layout.list_row, parent, false);
-                holder = new ViewHolder();
-                holder.title = (TextView) convertView.findViewById(R.id.file_title);
-                holder.size = (TextView) convertView.findViewById(R.id.file_size);
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-            SmbFile file = getItem(position);
-            holder.title.setText(file.getName());
-            try {
-                if (file.isFile()) {
-                    holder.size.setText(String.valueOf((double) file.length() / 100000) + "mb");
-                } else {
-                    holder.size.setText(file.list().length + " Items");
-                }
-            } catch (SmbException e) {
-                e.printStackTrace();
-            }
-
-            return convertView;
-        }
-    }
-
-    static class ViewHolder {
-        public TextView title;
-        public TextView size;
-    }
-
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        int index = info.position;
+        AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
+        int itemIndex = contextMenuInfo.position;
+        SmbFile selectedFile = (SmbFile) mListView.getAdapter().getItem(itemIndex);
+
         switch ((String) item.getTitle()) {
-            case "Delete":
-                UiHelpers.showDeleteConfirmationDialog(
-                        MainActivity.this,
-                        (SmbFile) mListView.getAdapter().getItem(index)
-                );
+            case Constants.DIALOG_TEXT_DELETE:
+                UiHelpers uiHelpers = new UiHelpers();
+                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, selectedFile);
                 break;
-            case "Rename":
-                Helpers.renameRemoteFile(
-                        MainActivity.this,
-                        (SmbFile) mListView.getAdapter().getItem(index),
-                        mAuth,
-                        "test"
-                );
+            case Constants.DIALOG_TEXT_RENAME:
+                new FileRenameTask(
+                        getApplicationContext(), mAuth, selectedFile, "test").execute();
+                break;
+            case Constants.DIALOG_TEXT_MOVE:
+                // TODO: do stuff here
                 break;
         }
         return super.onContextItemSelected(item);
     }
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    public void onCreateContextMenu(ContextMenu menu, View v,
+                                    ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         ListView list = (ListView) v;
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
         int position = info.position;
         SmbFile file = (SmbFile) list.getAdapter().getItem(position);
 
         menu.setHeaderTitle(file.getName());
-        menu.add(0, v.getId(), 0, "Move");
-        menu.add(0, v.getId(), 0, "Rename");
-        menu.add(0, v.getId(), 0, "Delete");
+        menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_MOVE);
+        menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_RENAME);
+        menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_DELETE);
     }
 }
