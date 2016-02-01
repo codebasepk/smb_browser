@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
         if (AppGlobals.isRunningForTheFirstTime()) {
             startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+            finish();
             return;
         }
 

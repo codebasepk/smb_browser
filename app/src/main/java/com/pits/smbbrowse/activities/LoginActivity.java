@@ -44,6 +44,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     AppGlobals.setPassword(passwordFieldText);
                     AppGlobals.setIsRunningForTheFirstTime(false);
                     startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    finish();
                 }
         }
     }
