@@ -142,6 +142,8 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             try {
                 if (file.isFile()) {
                     holder.size.setText(String.valueOf((double) file.length() / 100000) + "mb");
+                } else {
+                    holder.size.setText(file.list().length + " Items");
                 }
             } catch (SmbException e) {
                 e.printStackTrace();
