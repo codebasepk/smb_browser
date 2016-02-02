@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.hudomju.swipe.SwipeToDismissTouchListener;
+import com.hudomju.swipe.adapter.ListViewAdapter;
 import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.tasks.FileRenameTask;
 import com.pits.smbbrowse.utils.AppGlobals;
@@ -26,7 +28,7 @@ import jcifs.smb.SmbFile;
 
 import static android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class MainActivity extends AppCompatActivity implements ListView.OnItemClickListener {
+public class MainActivity extends AppCompatActivity {
 
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
@@ -47,18 +49,17 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         mAuth = Helpers.getAuthenticationCredentials();
 
         mListView = (ListView) findViewById(R.id.content_list);
-        mListView.setOnItemClickListener(this);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    SmbFile directory = new SmbFile(mSambaShare, mAuth);
+                    final SmbFile directory = new SmbFile(mSambaShare, mAuth);
                     SmbFile[] files = directory.listFiles();
-                    List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
+                    final List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
                     final ContentListAdapter adapter = new ContentListAdapter(
                             getApplicationContext(),
-                            R.layout.list_row,
+                            R.layout.list_item,
                             filteredFiles
                     );
                     runOnUiThread(new Runnable() {
@@ -66,6 +67,67 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                         public void run() {
                             mListView.setAdapter(adapter);
                             registerForContextMenu(mListView);
+                            final SwipeToDismissTouchListener<ListViewAdapter> touchListener =
+                                    new SwipeToDismissTouchListener<>(
+                                            new ListViewAdapter(mListView),
+                                            new SwipeToDismissTouchListener.
+                                                    DismissCallbacks<ListViewAdapter>() {
+                                                @Override
+                                                public boolean canDismiss(int position) {
+                                                    return true;
+                                                }
+
+                                                @Override
+                                                public void onDismiss(ListViewAdapter view, int position) {
+                                                }
+                                            });
+                            mListView.setOnTouchListener(touchListener);
+                            mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    if (touchListener.existPendingDismisses()) {
+                                        touchListener.undoPendingDismiss();
+                                    } else {
+                                        final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
+                                        try {
+                                            if (file.isFile()) {
+                                                UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
+                                            } else {
+                                                mListView.setAdapter(null);
+                                                new Thread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        try {
+                                                            SmbFile directory = new SmbFile(file.getCanonicalPath(), mAuth);
+                                                            SmbFile[] files = directory.listFiles();
+                                                            List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
+                                                            final ContentListAdapter adapter = new ContentListAdapter(
+                                                                    getApplicationContext(),
+                                                                    R.layout.list_item,
+                                                                    filteredFiles
+                                                            );
+                                                            runOnUiThread(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    mListView.setAdapter(adapter);
+                                                                    registerForContextMenu(mListView);
+                                                                }
+                                                            });
+                                                        } catch (MalformedURLException e) {
+                                                            e.printStackTrace();
+                                                        } catch (SmbException e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                    }
+                                                }).start();
+
+                                            }
+                                        } catch (SmbException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            });
                         }
                     });
                 } catch (MalformedURLException e) {
@@ -75,48 +137,6 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                 }
             }
         }).start();
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
-        try {
-            if (file.isFile()) {
-                UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
-            } else {
-                mListView.setAdapter(null);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            SmbFile directory = new SmbFile(file.getCanonicalPath(), mAuth);
-                            SmbFile[] files = directory.listFiles();
-                            List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                            final ContentListAdapter adapter = new ContentListAdapter(
-                                    getApplicationContext(),
-                                    R.layout.list_row,
-                                    filteredFiles
-                            );
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mListView.setAdapter(adapter);
-                                    registerForContextMenu(mListView);
-                                }
-                            });
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        } catch (SmbException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-
-            }
-        } catch (SmbException e) {
-            e.printStackTrace();
-        }
-
     }
 
     @Override
