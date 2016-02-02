@@ -1,12 +1,15 @@
 package com.pits.smbbrowse.utils;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 public class AppGlobals extends Application {
 
     private static SharedPreferences sPreferences;
+    private static Context sContext;
+
     private static final String FIRST_RUN_KEY = "first_run";
     private static final String HOST_NAME_KEY = "host_address";
     private static final String USERNAME_KEY = "username";
@@ -15,7 +18,12 @@ public class AppGlobals extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        sContext = getApplicationContext();
         sPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    }
+
+    public static Context getContext() {
+        return sContext;
     }
 
     public static boolean isRunningForTheFirstTime() {

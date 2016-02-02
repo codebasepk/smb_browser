@@ -5,10 +5,10 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.utils.AppGlobals;
+import com.pits.smbbrowse.utils.UiHelpers;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -27,23 +27,24 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        String hostnameFieldText = mHostEntry.getText().toString();
-        String usernameFieldText = mUsernameEntry.getText().toString();
-        String passwordFieldText = mPasswordEntry.getText().toString();
-
         switch (v.getId()) {
             case R.id.button_submit:
+                String hostnameFieldText = mHostEntry.getText().toString();
+                String usernameFieldText = mUsernameEntry.getText().toString();
+                String passwordFieldText = mPasswordEntry.getText().toString();
+
                 if (hostnameFieldText.isEmpty() || usernameFieldText.isEmpty() ||
                         passwordFieldText.isEmpty()) {
 
-                    Toast.makeText(getApplicationContext(), "All fields are required to be filled",
-                            Toast.LENGTH_LONG).show();
+                    UiHelpers.showLongToast(
+                            getApplicationContext(), "All fields are required to be filled");
                 } else {
                     AppGlobals.setSambaHostAddress(hostnameFieldText);
                     AppGlobals.setUsername(usernameFieldText);
                     AppGlobals.setPassword(passwordFieldText);
                     AppGlobals.setIsRunningForTheFirstTime(false);
                     startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    finish();
                 }
         }
     }

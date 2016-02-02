@@ -7,12 +7,15 @@
 
     <TextView
         android:id="@+id/file_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textColor="@color/colorAccent"/>
 
     <TextView
         android:id="@+id/file_size"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/tertiary_text_light" />
 
 </LinearLayout>
