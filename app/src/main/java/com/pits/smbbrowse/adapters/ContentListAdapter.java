@@ -18,6 +18,8 @@ import jcifs.smb.SmbFile;
 
 public class ContentListAdapter extends ArrayAdapter<SmbFile> {
 
+    public ViewHolder holder;
+
     public ContentListAdapter(Context context, int resource, List<SmbFile> objects) {
         super(context, resource, objects);
     }
@@ -25,15 +27,13 @@ public class ContentListAdapter extends ArrayAdapter<SmbFile> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        ViewHolder holder;
         if (convertView == null) {
             Context ctx = AppGlobals.getContext();
             LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.list_row, parent, false);
+            convertView = inflater.inflate(R.layout.list_item, parent, false);
             holder = new ViewHolder();
-            holder.title = (TextView) convertView.findViewById(R.id.file_title);
-            holder.size = (TextView) convertView.findViewById(R.id.file_size);
+            holder.title = (TextView) convertView.findViewById(R.id.txt_data);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -45,7 +45,7 @@ public class ContentListAdapter extends ArrayAdapter<SmbFile> {
             if (file.isFile()) {
                 float sizeToMbs = (float) file.length() / 100000;
                 String sizeString = String.format("%fmb", sizeToMbs);
-                holder.size.setText(String.valueOf(sizeString));
+//                holder.size.setText(String.valueOf(sizeString));
             }
         } catch (SmbException e) {
             e.printStackTrace();
@@ -56,6 +56,5 @@ public class ContentListAdapter extends ArrayAdapter<SmbFile> {
 
     static class ViewHolder {
         public TextView title;
-        public TextView size;
     }
 }
