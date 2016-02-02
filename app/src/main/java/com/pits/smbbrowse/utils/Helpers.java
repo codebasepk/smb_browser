@@ -40,8 +40,4 @@ public class Helpers {
         }
         return sizeInMbs > sizeConstraint;
     }
-
-    public static void print(String text) {
-        System.out.println(text);
-    }
 }

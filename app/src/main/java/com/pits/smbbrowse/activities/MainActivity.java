@@ -124,18 +124,18 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         int itemIndex = contextMenuInfo.position;
         SmbFile selectedFile = (SmbFile) mListView.getAdapter().getItem(itemIndex);
+        UiHelpers uiHelpers = new UiHelpers();
 
         switch ((String) item.getTitle()) {
             case Constants.DIALOG_TEXT_DELETE:
-                UiHelpers uiHelpers = new UiHelpers();
                 uiHelpers.showDeleteConfirmationDialog(MainActivity.this, selectedFile);
                 break;
             case Constants.DIALOG_TEXT_RENAME:
-                new FileRenameTask(
-                        getApplicationContext(), mAuth, selectedFile, "test").execute();
+                uiHelpers.showFileRenameDialog(MainActivity.this, mAuth, selectedFile);
                 break;
             case Constants.DIALOG_TEXT_MOVE:
-                // TODO: do stuff here
+                new FileRenameTask(
+                        getApplicationContext(), mAuth, selectedFile, null).execute();
                 break;
         }
         return super.onContextItemSelected(item);
