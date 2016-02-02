@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
     private String mSambaShare;
+    private ContentListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                     SmbFile directory = new SmbFile(mSambaShare, mAuth);
                     SmbFile[] files = directory.listFiles();
                     List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                    final ContentListAdapter adapter = new ContentListAdapter(
+                    mAdapter = new ContentListAdapter(
                             getApplicationContext(),
                             R.layout.list_row,
                             filteredFiles
@@ -64,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mListView.setAdapter(adapter);
+                            mListView.setAdapter(mAdapter);
                             registerForContextMenu(mListView);
                         }
                     });
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                             SmbFile directory = new SmbFile(file.getCanonicalPath(), mAuth);
                             SmbFile[] files = directory.listFiles();
                             List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                            final ContentListAdapter adapter = new ContentListAdapter(
+                            mAdapter = new ContentListAdapter(
                                     getApplicationContext(),
                                     R.layout.list_row,
                                     filteredFiles
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mListView.setAdapter(adapter);
+                                    mListView.setAdapter(mAdapter);
                                     registerForContextMenu(mListView);
                                 }
                             });
@@ -124,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         int itemIndex = contextMenuInfo.position;
         SmbFile selectedFile = (SmbFile) mListView.getAdapter().getItem(itemIndex);
-        UiHelpers uiHelpers = new UiHelpers();
+        UiHelpers uiHelpers = new UiHelpers(mAdapter);
 
         switch ((String) item.getTitle()) {
             case Constants.DIALOG_TEXT_DELETE:
