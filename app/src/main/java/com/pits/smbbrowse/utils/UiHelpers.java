@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.pits.smbbrowse.R;
+import com.pits.smbbrowse.adapters.ContentListAdapter;
 import com.pits.smbbrowse.tasks.FileRenameTask;
 
 import jcifs.smb.NtlmPasswordAuthentication;
@@ -18,6 +19,11 @@ public class UiHelpers implements AlertDialog.OnClickListener {
 
     private SmbFile mFileToDelete;
     private EditText mFileNameField;
+    private ContentListAdapter mListAdapter;
+
+    public UiHelpers(ContentListAdapter listAdapter) {
+        this.mListAdapter = listAdapter;
+    }
 
     public void showDeleteConfirmationDialog(Activity context, SmbFile fileToDelete) {
         mFileToDelete = fileToDelete;
@@ -44,6 +50,7 @@ public class UiHelpers implements AlertDialog.OnClickListener {
                 // Delete the file and dismiss the dialog.
                 try {
                     mFileToDelete.delete();
+                    removeItemFromAdapter(mListAdapter, mFileToDelete);
                 } catch (SmbException e) {
                     e.printStackTrace();
                 }
@@ -77,5 +84,10 @@ public class UiHelpers implements AlertDialog.OnClickListener {
         builder.setNegativeButton("Cancel", this);
         builder.create();
         builder.show();
+    }
+
+    private void removeItemFromAdapter(ContentListAdapter adapter, SmbFile smbFile) {
+        adapter.remove(smbFile);
+        adapter.notifyDataSetChanged();
     }
 }
