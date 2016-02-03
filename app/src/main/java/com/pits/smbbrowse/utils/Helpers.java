@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -78,5 +79,31 @@ public class Helpers {
             }
         }
         return count;
+    }
+
+    public static void createFileLog(NtlmPasswordAuthentication auth, String filename,
+                                     String location) {
+
+        try {
+            String newFile = location + changeFileExtention(filename);
+            SmbFile logFile = new SmbFile(newFile, auth);
+            System.out.println(newFile);
+            logFile.createNewFile();
+        } catch (MalformedURLException | SmbException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getDeletedLogLocation() {
+        return AppGlobals.getSambaHostAddress() + Constants.DIRECTORY_DELETE_LOG + "/";
+    }
+
+    public static String getRenamedLogLocation() {
+        return AppGlobals.getSambaHostAddress() + Constants.DIRECTORY_RENAME_LOG + "/";
+    }
+
+    private static String changeFileExtention(String filename) {
+        String nameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
+        return nameWithoutExtension + ".txt";
     }
 }

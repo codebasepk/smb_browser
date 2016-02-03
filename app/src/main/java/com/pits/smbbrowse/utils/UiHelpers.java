@@ -18,9 +18,12 @@ public class UiHelpers implements AlertDialog.OnClickListener {
 
     private SmbFile mFileToDelete;
     private EditText mFileNameField;
+    private NtlmPasswordAuthentication mAuth;
 
-    public void showDeleteConfirmationDialog(Activity context, SmbFile fileToDelete) {
+    public void showDeleteConfirmationDialog(Activity context, NtlmPasswordAuthentication auth,
+                                             SmbFile fileToDelete) {
         mFileToDelete = fileToDelete;
+        mAuth = auth;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setIcon(R.mipmap.ic_launcher);
@@ -43,7 +46,9 @@ public class UiHelpers implements AlertDialog.OnClickListener {
             case DialogInterface.BUTTON_POSITIVE:
                 // Delete the file and dismiss the dialog.
                 try {
+                    String filename = mFileToDelete.getName();
                     mFileToDelete.delete();
+                    Helpers.createFileLog(mAuth, filename, Helpers.getDeletedLogLocation());
                 } catch (SmbException e) {
                     e.printStackTrace();
                 }

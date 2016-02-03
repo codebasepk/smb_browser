@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
         switch ((String) item.getTitle()) {
             case Constants.DIALOG_TEXT_DELETE:
-                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, selectedFile);
+                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, mAuth, selectedFile);
                 break;
             case Constants.DIALOG_TEXT_RENAME:
                 uiHelpers.showFileRenameDialog(MainActivity.this, mAuth, selectedFile);

@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 
 import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Constants;
+import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
 
 import java.net.MalformedURLException;
@@ -42,7 +43,7 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
                 moved_directory = smbHost + Constants.DIRECTORY_MOVED;
             }
             String newLocationAbs = moved_directory + "/" + mFileToRename.getName();
-            SmbFile newFile = reallyRenameFile(newLocationAbs);
+            SmbFile newFile = reallyRenameFile(newLocationAbs, false);
             if (newFile == null) {
                 doneMessage = "Operation failed";
             } else {
@@ -51,7 +52,7 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
         } else {
             // Its a rename request
             String newNameAbs = mFileToRename.getParent() + mNewName;
-            SmbFile newFile = reallyRenameFile(newNameAbs);
+            SmbFile newFile = reallyRenameFile(newNameAbs, true);
             if (newFile == null) {
                 doneMessage = "Operation failed";
             } else {
@@ -67,11 +68,15 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
         UiHelpers.showLongToast(mContext, doneMessage);
     }
 
-    private SmbFile reallyRenameFile(String newPath) {
+    private SmbFile reallyRenameFile(String newPath, boolean log) {
         SmbFile newFile = null;
         try {
             newFile = new SmbFile(newPath, mAuth);
             mFileToRename.renameTo(newFile);
+            if (log) {
+                Helpers.createFileLog(
+                        mAuth, mFileToRename.getName(), Helpers.getRenamedLogLocation());
+            }
         } catch (MalformedURLException | SmbException e) {
             e.printStackTrace();
         }
