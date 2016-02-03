@@ -31,7 +31,6 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
     private String mSambaHostAddress;
-//    private ContentListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

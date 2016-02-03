@@ -71,6 +71,7 @@ public class UiHelpers implements AlertDialog.OnClickListener {
                                      final SmbFile fileToRename) {
         mFileNameField = new EditText(activity);
         mFileNameField.setText(fileToRename.getName());
+        mFileNameField.setSelection(fileToRename.getName().length());
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle(Constants.DIALOG_TEXT_RENAME);
