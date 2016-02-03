@@ -6,6 +6,7 @@ import android.widget.ListView;
 
 import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.adapters.ContentListAdapter;
+import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Helpers;
 
 import java.net.MalformedURLException;
@@ -53,6 +54,7 @@ public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapte
     protected void onPostExecute(ContentListAdapter contentListAdapter) {
         super.onPostExecute(contentListAdapter);
         mItemsListView.setAdapter(contentListAdapter);
+        AppGlobals.setCurrentBrowsedLocation(mSambaShareAddress);
         mActivity.registerForContextMenu(mItemsListView);
     }
 }

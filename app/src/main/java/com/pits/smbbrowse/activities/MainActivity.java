@@ -17,6 +17,8 @@ import com.pits.smbbrowse.utils.Constants;
 import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
 
+import java.net.MalformedURLException;
+
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
+    private String mSambaHostAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,13 +42,13 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             return;
         }
 
-        String sambaHostAddress = AppGlobals.getSambaHostAddress();
+        mSambaHostAddress = AppGlobals.getSambaHostAddress();
         mAuth = Helpers.getAuthenticationCredentials();
 
         mListView = (ListView) findViewById(R.id.content_list);
         mListView.setOnItemClickListener(this);
 
-        new BrowseDirectoryTask(MainActivity.this, sambaHostAddress, mAuth, mListView).execute();
+        new BrowseDirectoryTask(MainActivity.this, mSambaHostAddress, mAuth, mListView).execute();
     }
 
     @Override
@@ -99,5 +102,26 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_MOVE);
         menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_RENAME);
         menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_DELETE);
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (!mSambaHostAddress.endsWith("/")) {
+            mSambaHostAddress = mSambaHostAddress + "/";
+        }
+
+        if (!mSambaHostAddress.equals(AppGlobals.getCurrentBrowsedLocation())) {
+            try {
+                SmbFile file = new SmbFile(AppGlobals.getCurrentBrowsedLocation(), mAuth);
+                String parent = file.getParent();
+                new BrowseDirectoryTask(
+                        MainActivity.this, parent, mAuth, mListView).execute();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            super.onBackPressed();
+        }
     }
 }
