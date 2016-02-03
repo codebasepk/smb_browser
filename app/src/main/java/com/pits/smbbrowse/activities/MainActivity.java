@@ -10,15 +10,12 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.pits.smbbrowse.R;
+import com.pits.smbbrowse.tasks.BrowseDirectoryTask;
 import com.pits.smbbrowse.tasks.FileRenameTask;
 import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Constants;
-import com.pits.smbbrowse.adapters.ContentListAdapter;
 import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
-
-import java.net.MalformedURLException;
-import java.util.List;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
@@ -30,7 +27,6 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
-    private String mSambaShare;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,38 +39,13 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             return;
         }
 
-        mSambaShare = AppGlobals.getSambaHostAddress();
+        String sambaHostAddress = AppGlobals.getSambaHostAddress();
         mAuth = Helpers.getAuthenticationCredentials();
 
         mListView = (ListView) findViewById(R.id.content_list);
         mListView.setOnItemClickListener(this);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SmbFile directory = new SmbFile(mSambaShare, mAuth);
-                    SmbFile[] files = directory.listFiles();
-                    List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                    final ContentListAdapter adapter = new ContentListAdapter(
-                            getApplicationContext(),
-                            R.layout.list_row,
-                            filteredFiles
-                    );
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mListView.setAdapter(adapter);
-                            registerForContextMenu(mListView);
-                        }
-                    });
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (SmbException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        new BrowseDirectoryTask(MainActivity.this, sambaHostAddress, mAuth, mListView).execute();
     }
 
     @Override
@@ -85,38 +56,12 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                 UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
             } else {
                 mListView.setAdapter(null);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            SmbFile directory = new SmbFile(file.getCanonicalPath(), mAuth);
-                            SmbFile[] files = directory.listFiles();
-                            List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                            final ContentListAdapter adapter = new ContentListAdapter(
-                                    getApplicationContext(),
-                                    R.layout.list_row,
-                                    filteredFiles
-                            );
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mListView.setAdapter(adapter);
-                                    registerForContextMenu(mListView);
-                                }
-                            });
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        } catch (SmbException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-
+                new BrowseDirectoryTask(
+                        MainActivity.this, file.getCanonicalPath(), mAuth, mListView).execute();
             }
         } catch (SmbException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
