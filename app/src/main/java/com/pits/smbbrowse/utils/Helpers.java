@@ -85,7 +85,7 @@ public class Helpers {
                                      String location) {
 
         try {
-            String newFile = location + changeFileExtention(filename);
+            String newFile = location + changeFileExtension(filename);
             SmbFile logFile = new SmbFile(newFile, auth);
             System.out.println(newFile);
             logFile.createNewFile();
@@ -102,8 +102,14 @@ public class Helpers {
         return AppGlobals.getSambaHostAddress() + Constants.DIRECTORY_RENAME_LOG + "/";
     }
 
-    private static String changeFileExtention(String filename) {
-        String nameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
+    private static String changeFileExtension(String filename) {
+        String nameWithoutExtension;
+        if (filename.contains(".")) {
+            // there is an extension
+            nameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
+        } else {
+            nameWithoutExtension = filename;
+        }
         return nameWithoutExtension + ".txt";
     }
 }
