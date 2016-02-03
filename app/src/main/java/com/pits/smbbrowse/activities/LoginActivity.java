@@ -8,6 +8,7 @@ import android.widget.EditText;
 
 import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.utils.AppGlobals;
+import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
@@ -38,6 +39,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                     UiHelpers.showLongToast(
                             getApplicationContext(), "All fields are required to be filled");
+                } else if (Helpers.isWifiConnected(getApplicationContext())) {
+                    UiHelpers.showWifiNotConnectedDialog(LoginActivity.this);
                 } else {
                     AppGlobals.setSambaHostAddress(hostnameFieldText);
                     AppGlobals.setUsername(usernameFieldText);

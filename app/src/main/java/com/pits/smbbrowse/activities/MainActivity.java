@@ -42,6 +42,11 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             return;
         }
 
+        if (!Helpers.isWifiConnected(getApplicationContext())) {
+            UiHelpers.showWifiNotConnectedDialog(MainActivity.this);
+            return;
+        }
+
         mSambaHostAddress = AppGlobals.getSambaHostAddress();
         mAuth = Helpers.getAuthenticationCredentials();
 

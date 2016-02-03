@@ -78,4 +78,21 @@ public class UiHelpers implements AlertDialog.OnClickListener {
         builder.create();
         builder.show();
     }
+
+    public static void showWifiNotConnectedDialog(final Activity activity) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setIcon(R.mipmap.ic_launcher);
+        builder.setTitle("Wifi not connected");
+        builder.setMessage(
+                "Please ensure wifi is enabled and on the same network as your Samba host.");
+        builder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                activity.finish();
+            }
+        });
+        builder.create();
+        builder.show();
+    }
 }

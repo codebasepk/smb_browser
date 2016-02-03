@@ -1,5 +1,9 @@
 package com.pits.smbbrowse.utils;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,5 +43,12 @@ public class Helpers {
             e.printStackTrace();
         }
         return sizeInMbs > sizeConstraint;
+    }
+
+    public static boolean isWifiConnected(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
     }
 }
