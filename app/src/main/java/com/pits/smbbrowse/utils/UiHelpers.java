@@ -79,19 +79,19 @@ public class UiHelpers implements AlertDialog.OnClickListener {
         builder.setMessage("Type in the new name");
         builder.setPositiveButton(Constants.DIALOG_TEXT_RENAME,
                 new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                new FileRenameTask(
-                        activity.getApplicationContext(), auth, mListAdapter,
-                        fileToRename, mFileNameField.getText().toString()).execute();
-            }
-        });
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new FileRenameTask(
+                                activity.getApplicationContext(), auth, mListAdapter,
+                                fileToRename, mFileNameField.getText().toString()).execute();
+                    }
+                });
         builder.setNegativeButton("Cancel", this);
         builder.create();
         builder.show();
     }
 
-    public static void showWifiNotConnectedDialog(final Activity activity) {
+    public static void showWifiNotConnectedDialog(final Activity activity, final boolean finish) {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setIcon(R.mipmap.ic_launcher);
         builder.setTitle("Wifi not connected");
@@ -101,7 +101,9 @@ public class UiHelpers implements AlertDialog.OnClickListener {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                activity.finish();
+                if (finish) {
+                    activity.finish();
+                }
             }
         });
         builder.create();

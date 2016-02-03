@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         }
 
         if (!Helpers.isWifiConnected(getApplicationContext())) {
-            UiHelpers.showWifiNotConnectedDialog(MainActivity.this);
+            UiHelpers.showWifiNotConnectedDialog(MainActivity.this, true);
             return;
         }
 
@@ -60,6 +60,12 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+        if (!Helpers.isWifiConnected(getApplicationContext())) {
+            UiHelpers.showWifiNotConnectedDialog(MainActivity.this, false);
+            return;
+        }
+
         final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
         try {
             if (file.isFile()) {
@@ -79,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         int itemIndex = contextMenuInfo.position;
         ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
-        SmbFile selectedFile = (SmbFile) adapter.getItem(itemIndex);
+        SmbFile selectedFile = adapter.getItem(itemIndex);
         UiHelpers uiHelpers = new UiHelpers(adapter);
 
         switch ((String) item.getTitle()) {
@@ -120,6 +126,12 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         }
 
         if (!mSambaHostAddress.equals(AppGlobals.getCurrentBrowsedLocation())) {
+
+            if (!Helpers.isWifiConnected(getApplicationContext())) {
+                UiHelpers.showWifiNotConnectedDialog(MainActivity.this, false);
+                return;
+            }
+
             try {
                 SmbFile file = new SmbFile(AppGlobals.getCurrentBrowsedLocation(), mAuth);
                 String parent = file.getParent();

@@ -65,7 +65,7 @@ public class LoginActivity extends AppCompatActivity
                 }
 
                 if (Helpers.isWifiConnected(getApplicationContext())) {
-                    UiHelpers.showWifiNotConnectedDialog(LoginActivity.this);
+                    UiHelpers.showWifiNotConnectedDialog(LoginActivity.this, true);
                 }
 
                 AppGlobals.setSambaHostAddress(hostnameFieldText);
