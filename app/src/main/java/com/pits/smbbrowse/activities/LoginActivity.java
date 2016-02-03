@@ -90,7 +90,7 @@ public class LoginActivity extends AppCompatActivity
 
     @Override
     public void afterTextChanged(Editable s) {
-        if (!s.toString().startsWith("smb://")) {
+        if (!s.toString().startsWith(Constants.HOST_PREFIX)) {
             mHostEntry.setText(Constants.HOST_PREFIX);
             mHostEntry.setSelection(Constants.HOST_PREFIX.length());
         }

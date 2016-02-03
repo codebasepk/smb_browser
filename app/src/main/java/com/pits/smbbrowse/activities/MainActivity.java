@@ -10,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.pits.smbbrowse.R;
+import com.pits.smbbrowse.adapters.ContentListAdapter;
 import com.pits.smbbrowse.tasks.BrowseDirectoryTask;
 import com.pits.smbbrowse.tasks.FileRenameTask;
 import com.pits.smbbrowse.utils.AppGlobals;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
     private String mSambaHostAddress;
+//    private ContentListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         int itemIndex = contextMenuInfo.position;
         SmbFile selectedFile = (SmbFile) mListView.getAdapter().getItem(itemIndex);
-        UiHelpers uiHelpers = new UiHelpers();
+        UiHelpers uiHelpers = new UiHelpers((ContentListAdapter) mListView.getAdapter());
 
         switch ((String) item.getTitle()) {
             case Constants.DIALOG_TEXT_DELETE:
