@@ -6,6 +6,8 @@ import android.net.NetworkInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
@@ -50,5 +52,31 @@ public class Helpers {
                 context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+    public static boolean isValidIp(String ip) {
+        Pattern pattern = Pattern.compile(Constants.IP_ADDRESS_PATTERN);
+        Matcher matcher = pattern.matcher(ip);
+        return matcher.matches();
+    }
+
+    public static String getIpFromSambaUrl(String url) {
+        String stripped = url.substring(Constants.HOST_PREFIX.length());
+        int forwardSlashCount = getCharacterRepetitionCount("/");
+        if (forwardSlashCount == 0) {
+            return stripped;
+        } else {
+            return stripped.split("/")[0];
+        }
+    }
+
+    public static int getCharacterRepetitionCount(String text) {
+        int count = 0;
+        for (char c: text.toCharArray()) {
+            if (c == '/') {
+                count++;
+            }
+        }
+        return count;
     }
 }
