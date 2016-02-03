@@ -78,8 +78,9 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         int itemIndex = contextMenuInfo.position;
-        SmbFile selectedFile = (SmbFile) mListView.getAdapter().getItem(itemIndex);
-        UiHelpers uiHelpers = new UiHelpers((ContentListAdapter) mListView.getAdapter());
+        ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
+        SmbFile selectedFile = (SmbFile) adapter.getItem(itemIndex);
+        UiHelpers uiHelpers = new UiHelpers(adapter);
 
         switch ((String) item.getTitle()) {
             case Constants.DIALOG_TEXT_DELETE:
@@ -90,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
                 break;
             case Constants.DIALOG_TEXT_MOVE:
                 new FileRenameTask(
-                        getApplicationContext(), mAuth, selectedFile, null).execute();
+                        getApplicationContext(), mAuth, adapter, selectedFile, null).execute();
                 break;
         }
         return super.onContextItemSelected(item);

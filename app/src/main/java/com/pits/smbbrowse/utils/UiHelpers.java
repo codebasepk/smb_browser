@@ -82,7 +82,7 @@ public class UiHelpers implements AlertDialog.OnClickListener {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 new FileRenameTask(
-                        activity.getApplicationContext(), auth,
+                        activity.getApplicationContext(), auth, mListAdapter,
                         fileToRename, mFileNameField.getText().toString()).execute();
             }
         });
@@ -108,7 +108,7 @@ public class UiHelpers implements AlertDialog.OnClickListener {
         builder.show();
     }
 
-    private void removeItemFromAdapter(ContentListAdapter adapter, SmbFile smbFile) {
+    public static void removeItemFromAdapter(ContentListAdapter adapter, SmbFile smbFile) {
         adapter.remove(smbFile);
         adapter.notifyDataSetChanged();
     }
