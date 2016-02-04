@@ -2,6 +2,8 @@ package com.pits.smbbrowse.tasks;
 
 import android.app.Activity;
 import android.os.AsyncTask;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.pits.smbbrowse.R;
@@ -19,14 +21,15 @@ import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
 
-public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapter> {
+public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapter> implements
+        SwipeActionAdapter.SwipeActionListener, ListView.OnItemLongClickListener {
 
     private NtlmPasswordAuthentication mCredentials;
     private String mSambaShareAddress;
     private ListView mItemsListView;
     private Activity mActivity;
-    private ContentListAdapter contentListAdapter = null;
-    private SwipeActionAdapter swipeActionAdapter;
+    private ContentListAdapter mContentListAdapter;
+    private SwipeActionAdapter mSwipeActionAdapter;
 
     public BrowseDirectoryTask(Activity activity, String sambaShareAddress,
                                NtlmPasswordAuthentication credentials, ListView itemsListView) {
@@ -44,7 +47,7 @@ public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapte
             SmbFile directory = new SmbFile(mSambaShareAddress, mCredentials);
             SmbFile[] files = directory.listFiles();
             List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-            contentListAdapter = new ContentListAdapter(
+            mContentListAdapter = new ContentListAdapter(
                     mActivity.getApplicationContext(),
                     R.layout.list_row,
                     filteredFiles
@@ -52,66 +55,63 @@ public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapte
         } catch (MalformedURLException | SmbException e) {
             e.printStackTrace();
         }
-        return contentListAdapter;
+        return mContentListAdapter;
     }
 
     @Override
     protected void onPostExecute(final ContentListAdapter contentListAdapter) {
         super.onPostExecute(contentListAdapter);
-        swipeActionAdapter = new SwipeActionAdapter(contentListAdapter);
-        mItemsListView.setAdapter(swipeActionAdapter);
+        mSwipeActionAdapter = new SwipeActionAdapter(contentListAdapter);
+        mItemsListView.setAdapter(mSwipeActionAdapter);
         AppGlobals.setCurrentBrowsedLocation(mSambaShareAddress);
-        mActivity.registerForContextMenu(mItemsListView);
-        swipeActionAdapter.addBackground(SwipeDirection.DIRECTION_NORMAL_LEFT, R.layout.row_bg_left)
-                .addBackground(SwipeDirection.DIRECTION_NORMAL_RIGHT, R.layout.row_bg_right);
-        swipeActionAdapter.setListView(mItemsListView);
-        swipeActionAdapter.setSwipeActionListener(new SwipeActionAdapter.SwipeActionListener() {
-            @Override
-            public boolean hasActions(int position, SwipeDirection direction) {
-                if (direction.isLeft()) return true;
-                if (direction.isRight()) return true;
-                return false;
+        mSwipeActionAdapter.addBackground(
+                SwipeDirection.DIRECTION_NORMAL_LEFT, R.layout.row_bg_left);
+        mSwipeActionAdapter.addBackground(
+                SwipeDirection.DIRECTION_NORMAL_RIGHT, R.layout.row_bg_right);
+        mSwipeActionAdapter.setListView(mItemsListView);
+        mSwipeActionAdapter.setSwipeActionListener(this);
+        mItemsListView.setOnItemLongClickListener(this);
+    }
+
+    @Override
+    public boolean hasActions(int position, SwipeDirection direction) {
+        return direction.isLeft() || direction.isRight();
+    }
+
+    @Override
+    public boolean shouldDismiss(int position, SwipeDirection direction) {
+        return direction == SwipeDirection.DIRECTION_NORMAL_LEFT;
+    }
+
+    @Override
+    public void onSwipe(int[] positionList, SwipeDirection[] directionList) {
+        UiHelpers uiHelpers = new UiHelpers(mContentListAdapter);
+        for (int i = 0; i < positionList.length; i++) {
+            SwipeDirection direction = directionList[i];
+            int position = positionList[i];
+            SmbFile file = mContentListAdapter.getItem(position);
+
+            switch (direction) {
+                case DIRECTION_NORMAL_LEFT:
+                case DIRECTION_FAR_LEFT:
+                    new FileRenameTask(
+                            mActivity.getApplicationContext(), mCredentials,
+                            mContentListAdapter, file, null).execute();
+                    break;
+                case DIRECTION_NORMAL_RIGHT:
+                case DIRECTION_FAR_RIGHT:
+                    uiHelpers.showDeleteConfirmationDialog(mActivity, mCredentials, file);
+                    break;
             }
+            mSwipeActionAdapter.notifyDataSetChanged();
+        }
+    }
 
-            @Override
-            public boolean shouldDismiss(int position, SwipeDirection direction) {
-                return direction == SwipeDirection.DIRECTION_NORMAL_LEFT;
-            }
-
-            @Override
-            public void onSwipe(int[] positionList, SwipeDirection[] directionList) {
-                UiHelpers uiHelpers = new UiHelpers(contentListAdapter);
-                for (int i = 0; i < positionList.length; i++) {
-                    SwipeDirection direction = directionList[i];
-                    int position = positionList[i];
-
-                    switch (direction) {
-                        case DIRECTION_NORMAL_LEFT:
-                        case DIRECTION_FAR_LEFT:
-                            try {
-                                new FileRenameTask(mActivity.getApplicationContext(), mCredentials,
-                                        contentListAdapter,
-                                        new SmbFile(String.valueOf(
-                                                swipeActionAdapter.getItem(position))),
-                                        null).execute();
-                            } catch (MalformedURLException e) {
-                                e.printStackTrace();
-                            }
-                            break;
-                        case DIRECTION_NORMAL_RIGHT:
-                        case DIRECTION_FAR_RIGHT:
-                            try {
-                                uiHelpers.showDeleteConfirmationDialog(mActivity, mCredentials,
-                                        new SmbFile(String.valueOf(swipeActionAdapter.getItem(position))));
-                            } catch (MalformedURLException e) {
-                                e.printStackTrace();
-                            }
-                            break;
-                    }
-                    swipeActionAdapter.notifyDataSetChanged();
-                }
-            }
-        });
-
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        SmbFile selectedFile = mContentListAdapter.getItem(position);
+        UiHelpers uiHelpers = new UiHelpers(mContentListAdapter);
+        uiHelpers.showFileRenameDialog(mActivity, mCredentials, selectedFile);
+        return true;
     }
 }
