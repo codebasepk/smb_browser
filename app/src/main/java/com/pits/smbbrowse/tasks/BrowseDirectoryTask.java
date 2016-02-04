@@ -2,6 +2,8 @@ package com.pits.smbbrowse.tasks;
 
 import android.app.Activity;
 import android.os.AsyncTask;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.pits.smbbrowse.R;
@@ -20,7 +22,7 @@ import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
 
 public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapter> implements
-        SwipeActionAdapter.SwipeActionListener {
+        SwipeActionAdapter.SwipeActionListener, ListView.OnItemLongClickListener {
 
     private NtlmPasswordAuthentication mCredentials;
     private String mSambaShareAddress;
@@ -62,13 +64,13 @@ public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapte
         mSwipeActionAdapter = new SwipeActionAdapter(contentListAdapter);
         mItemsListView.setAdapter(mSwipeActionAdapter);
         AppGlobals.setCurrentBrowsedLocation(mSambaShareAddress);
-        mActivity.registerForContextMenu(mItemsListView);
         mSwipeActionAdapter.addBackground(
                 SwipeDirection.DIRECTION_NORMAL_LEFT, R.layout.row_bg_left);
         mSwipeActionAdapter.addBackground(
                 SwipeDirection.DIRECTION_NORMAL_RIGHT, R.layout.row_bg_right);
         mSwipeActionAdapter.setListView(mItemsListView);
         mSwipeActionAdapter.setSwipeActionListener(this);
+        mItemsListView.setOnItemLongClickListener(this);
     }
 
     @Override
@@ -103,5 +105,13 @@ public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapte
             }
             mSwipeActionAdapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        SmbFile selectedFile = mContentListAdapter.getItem(position);
+        UiHelpers uiHelpers = new UiHelpers(mContentListAdapter);
+        uiHelpers.showFileRenameDialog(mActivity, mCredentials, selectedFile);
+        return true;
     }
 }
