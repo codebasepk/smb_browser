@@ -18,10 +18,7 @@ public class SwipeTouchListener implements View.OnTouchListener {
     private final GestureDetector gestureDetector = new GestureDetector(new GestureListener());
 
     public boolean onTouch(final View view, final MotionEvent motionEvent) {
-
-//        super.onTouch(view, motionEvent);
         return gestureDetector.onTouchEvent(motionEvent);
-
     }
 
 

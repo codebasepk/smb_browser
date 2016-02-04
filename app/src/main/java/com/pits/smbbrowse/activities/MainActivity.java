@@ -3,6 +3,7 @@ package com.pits.smbbrowse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,7 +33,6 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
     private String mSambaHostAddress;
-    private SwipeTouchListener swipeTouchListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             @Override
             public void onSwipeRight(int pos) {
                 super.onSwipeRight(pos);
-                System.out.println("onSwipeRight");
+                Log.i("LOGTAG", "onSwipeRight");
                 ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
                 SmbFile selectedFile = adapter.getItem(pos);
                 UiHelpers uiHelpers = new UiHelpers(adapter);
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             @Override
             public void onSwipeLeft(int pos) {
                 super.onSwipeLeft(pos);
-                System.out.println("onSwipeLeft");
+                Log.i("LOGTAG", "onSwipeLeft");
                 ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
                 SmbFile selectedFile = adapter.getItem(pos);
                 new FileRenameTask(
