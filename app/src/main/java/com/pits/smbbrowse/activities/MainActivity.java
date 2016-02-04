@@ -3,6 +3,7 @@ package com.pits.smbbrowse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +17,7 @@ import com.pits.smbbrowse.tasks.FileRenameTask;
 import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Constants;
 import com.pits.smbbrowse.utils.Helpers;
+import com.pits.smbbrowse.utils.SwipeTouchListener;
 import com.pits.smbbrowse.utils.UiHelpers;
 
 import java.net.MalformedURLException;
@@ -31,12 +33,13 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
     private String mSambaHostAddress;
+    private Helpers mHelpers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        mHelpers = new Helpers();
         if (AppGlobals.isRunningForTheFirstTime()) {
             startActivity(new Intent(getApplicationContext(), LoginActivity.class));
             finish();
@@ -50,32 +53,53 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
         mSambaHostAddress = AppGlobals.getSambaHostAddress();
         mAuth = Helpers.getAuthenticationCredentials();
-
         mListView = (ListView) findViewById(R.id.content_list);
         mListView.setOnItemClickListener(this);
+        mListView.setOnTouchListener(new SwipeTouchListener(mListView) {
+            @Override
+            public void onSwipeRight(int pos, View view) {
+                super.onSwipeRight(pos, view);
+                Log.i("LOGTAG", "onSwipeRight");
+//                ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
+//                SmbFile selectedFile = adapter.getItem(pos);
+//                UiHelpers uiHelpers = new UiHelpers(adapter);
+//                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, mAuth, selectedFile);
+            }
+
+            @Override
+            public void onSwipeLeft(int pos, View view) {
+                super.onSwipeLeft(pos, view);
+                Log.i("LOGTAG", "onSwipeLeft");
+//                ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
+//                SmbFile selectedFile = adapter.getItem(pos);
+//                new FileRenameTask(
+//                        getApplicationContext(), mAuth, adapter, selectedFile, null).execute();
+            }
+        });
 
         new BrowseDirectoryTask(MainActivity.this, mSambaHostAddress, mAuth, mListView).execute();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-        if (!Helpers.isWifiConnected(getApplicationContext())) {
-            UiHelpers.showWifiNotConnectedDialog(MainActivity.this, false);
-            return;
-        }
-
-        final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
-        try {
-            if (file.isFile()) {
-                UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
-            } else {
-                mListView.setAdapter(null);
-                new BrowseDirectoryTask(
-                        MainActivity.this, file.getCanonicalPath(), mAuth, mListView).execute();
+        if (!SwipeTouchListener.sIsSwipe) {
+            if (!Helpers.isWifiConnected(getApplicationContext())) {
+                UiHelpers.showWifiNotConnectedDialog(MainActivity.this, false);
+                return;
             }
-        } catch (SmbException e) {
-            e.printStackTrace();
+
+            final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
+            try {
+                if (file.isFile()) {
+                    UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
+                } else {
+                    mListView.setAdapter(null);
+                    new BrowseDirectoryTask(
+                            MainActivity.this, file.getCanonicalPath(), mAuth, mListView).execute();
+                }
+            } catch (SmbException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -132,8 +156,10 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             }
 
             try {
+                System.out.println(AppGlobals.getCurrentBrowsedLocation());
                 SmbFile file = new SmbFile(AppGlobals.getCurrentBrowsedLocation(), mAuth);
                 String parent = file.getParent();
+                System.out.println(parent);
                 new BrowseDirectoryTask(
                         MainActivity.this, parent, mAuth, mListView).execute();
             } catch (MalformedURLException e) {

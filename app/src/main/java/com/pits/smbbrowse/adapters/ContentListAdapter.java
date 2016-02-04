@@ -34,6 +34,7 @@ public class ContentListAdapter extends ArrayAdapter<SmbFile> {
             holder = new ViewHolder();
             holder.title = (TextView) convertView.findViewById(R.id.file_title);
             holder.size = (TextView) convertView.findViewById(R.id.file_size);
+            ViewHolder.background = (TextView) convertView.findViewById(R.id.background);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -54,8 +55,9 @@ public class ContentListAdapter extends ArrayAdapter<SmbFile> {
         return convertView;
     }
 
-    static class ViewHolder {
+    public static class ViewHolder {
         public TextView title;
         public TextView size;
+        public static TextView background;
     }
 }
