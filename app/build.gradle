@@ -25,4 +25,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'jcifs:jcifs:1.3.17'
     compile 'com.android.support:design:23.0.1'
+    compile 'com.wdullaer:swipeactionadapter:2.0.0'
 }
