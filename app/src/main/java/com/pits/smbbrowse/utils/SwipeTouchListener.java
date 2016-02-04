@@ -4,15 +4,21 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import com.pits.smbbrowse.R;
+import com.pits.smbbrowse.adapters.ContentListAdapter;
 
 
 public class SwipeTouchListener implements View.OnTouchListener {
 
     public static boolean sIsSwipe = false;
     private ListView mListView;
+    private Helpers mHelpers;
 
     public SwipeTouchListener(ListView listView) {
         this.mListView = listView;
+        mHelpers = new Helpers();
     }
 
     private final GestureDetector gestureDetector = new GestureDetector(new GestureListener());
@@ -40,7 +46,6 @@ public class SwipeTouchListener implements View.OnTouchListener {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-
             boolean result = false;
             try {
                 float diffY = e2.getY() - e1.getY();
@@ -48,11 +53,32 @@ public class SwipeTouchListener implements View.OnTouchListener {
                 if (Math.abs(diffX) > Math.abs(diffY)) {
                     if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
                         int pos = mListView.pointToPosition((int) e1.getX(), (int) e2.getY());
+                        View wantedView = mListView.getChildAt(pos).findViewById(R.id.file_title);
+                        View fadeInLayout = mListView.getChildAt(pos).findViewById(R.id.background);
                         if (diffX > 0) {
-                            onSwipeRight(pos);
+                            System.out.println(wantedView.getVisibility() == View.VISIBLE);
+                            if(wantedView.getVisibility() == View.VISIBLE) {
+                                mHelpers.fadeOutView(wantedView);
+                                mHelpers.slideInView(fadeInLayout);
+                                TextView textView = (TextView) fadeInLayout;
+                                textView.setText("Delete");
+                            } else {
+                                mHelpers.fadeInView(fadeInLayout);
+                                mHelpers.slideOutView(wantedView);
+                            }
+                            onSwipeRight(pos, wantedView);
                             sIsSwipe = true;
                         } else {
-                            onSwipeLeft(pos);
+                            if(wantedView.getVisibility() == View.VISIBLE) {
+                                mHelpers.fadeOutView(wantedView);
+                                mHelpers.slideInView(ContentListAdapter.ViewHolder.background);
+                                ContentListAdapter.ViewHolder.background.setText("Move");
+                            } else {
+                                mHelpers.fadeInView(ContentListAdapter.ViewHolder.background);
+                                mHelpers.slideOutView(wantedView);
+                                ContentListAdapter.ViewHolder.background.setText("Move");
+                            }
+                            onSwipeLeft(pos, wantedView);
                             sIsSwipe = true;
                         }
                     }
@@ -71,8 +97,8 @@ public class SwipeTouchListener implements View.OnTouchListener {
             return result;
         }
     }
-    public void onSwipeRight(int position) {}
-    public void onSwipeLeft(int position) {}
+    public void onSwipeRight(int position, View view) {}
+    public void onSwipeLeft(int position, View view) {}
     public void onSwipeTop() {}
     public void onSwipeBottom() {}
 }

@@ -33,11 +33,13 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
     private String mSambaHostAddress;
+    private Helpers mHelpers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mHelpers = new Helpers();
         if (AppGlobals.isRunningForTheFirstTime()) {
             startActivity(new Intent(getApplicationContext(), LoginActivity.class));
             finish();
@@ -55,23 +57,23 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         mListView.setOnItemClickListener(this);
         mListView.setOnTouchListener(new SwipeTouchListener(mListView) {
             @Override
-            public void onSwipeRight(int pos) {
-                super.onSwipeRight(pos);
+            public void onSwipeRight(int pos, View view) {
+                super.onSwipeRight(pos, view);
                 Log.i("LOGTAG", "onSwipeRight");
-                ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
-                SmbFile selectedFile = adapter.getItem(pos);
-                UiHelpers uiHelpers = new UiHelpers(adapter);
-                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, mAuth, selectedFile);
+//                ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
+//                SmbFile selectedFile = adapter.getItem(pos);
+//                UiHelpers uiHelpers = new UiHelpers(adapter);
+//                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, mAuth, selectedFile);
             }
 
             @Override
-            public void onSwipeLeft(int pos) {
-                super.onSwipeLeft(pos);
+            public void onSwipeLeft(int pos, View view) {
+                super.onSwipeLeft(pos, view);
                 Log.i("LOGTAG", "onSwipeLeft");
-                ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
-                SmbFile selectedFile = adapter.getItem(pos);
-                new FileRenameTask(
-                        getApplicationContext(), mAuth, adapter, selectedFile, null).execute();
+//                ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
+//                SmbFile selectedFile = adapter.getItem(pos);
+//                new FileRenameTask(
+//                        getApplicationContext(), mAuth, adapter, selectedFile, null).execute();
             }
         });
 
