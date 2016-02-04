@@ -9,6 +9,7 @@ public class AppGlobals extends Application {
 
     private static SharedPreferences sPreferences;
     private static Context sContext;
+    private static String sCurrentLocation;
 
     private static final String FIRST_RUN_KEY = "first_run";
     private static final String HOST_NAME_KEY = "host_address";
@@ -56,6 +57,14 @@ public class AppGlobals extends Application {
 
     public static void setPassword(String password) {
         sPreferences.edit().putString(PASSWORD_KEY, password).apply();
+    }
+
+    public static void setCurrentBrowsedLocation(String currentLocation) {
+        sCurrentLocation = currentLocation;
+    }
+
+    public static String getCurrentBrowsedLocation() {
+        return sCurrentLocation;
     }
 
 }

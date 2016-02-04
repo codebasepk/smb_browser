@@ -10,15 +10,15 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.pits.smbbrowse.R;
+import com.pits.smbbrowse.adapters.ContentListAdapter;
+import com.pits.smbbrowse.tasks.BrowseDirectoryTask;
 import com.pits.smbbrowse.tasks.FileRenameTask;
 import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Constants;
-import com.pits.smbbrowse.adapters.ContentListAdapter;
 import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
 
 import java.net.MalformedURLException;
-import java.util.List;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
@@ -30,8 +30,7 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
 
     private ListView mListView;
     private NtlmPasswordAuthentication mAuth;
-    private String mSambaShare;
-    private ContentListAdapter mAdapter;
+    private String mSambaHostAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,99 +43,60 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
             return;
         }
 
-        mSambaShare = AppGlobals.getSambaHostAddress();
+        if (!Helpers.isWifiConnected(getApplicationContext())) {
+            UiHelpers.showWifiNotConnectedDialog(MainActivity.this, true);
+            return;
+        }
+
+        mSambaHostAddress = AppGlobals.getSambaHostAddress();
         mAuth = Helpers.getAuthenticationCredentials();
 
         mListView = (ListView) findViewById(R.id.content_list);
         mListView.setOnItemClickListener(this);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SmbFile directory = new SmbFile(mSambaShare, mAuth);
-                    SmbFile[] files = directory.listFiles();
-                    List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                    mAdapter = new ContentListAdapter(
-                            getApplicationContext(),
-                            R.layout.list_row,
-                            filteredFiles
-                    );
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mListView.setAdapter(mAdapter);
-                            registerForContextMenu(mListView);
-                        }
-                    });
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (SmbException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        new BrowseDirectoryTask(MainActivity.this, mSambaHostAddress, mAuth, mListView).execute();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+        if (!Helpers.isWifiConnected(getApplicationContext())) {
+            UiHelpers.showWifiNotConnectedDialog(MainActivity.this, false);
+            return;
+        }
+
         final SmbFile file = (SmbFile) parent.getItemAtPosition(position);
         try {
             if (file.isFile()) {
                 UiHelpers.showLongToast(getApplicationContext(), "Cannot browse a file");
             } else {
                 mListView.setAdapter(null);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            SmbFile directory = new SmbFile(file.getCanonicalPath(), mAuth);
-                            SmbFile[] files = directory.listFiles();
-                            List<SmbFile> filteredFiles = Helpers.filterFilesLargerThan(files, 10);
-                            mAdapter = new ContentListAdapter(
-                                    getApplicationContext(),
-                                    R.layout.list_row,
-                                    filteredFiles
-                            );
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mListView.setAdapter(mAdapter);
-                                    registerForContextMenu(mListView);
-                                }
-                            });
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        } catch (SmbException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-
+                new BrowseDirectoryTask(
+                        MainActivity.this, file.getCanonicalPath(), mAuth, mListView).execute();
             }
         } catch (SmbException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo contextMenuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         int itemIndex = contextMenuInfo.position;
-        SmbFile selectedFile = (SmbFile) mListView.getAdapter().getItem(itemIndex);
-        UiHelpers uiHelpers = new UiHelpers(mAdapter);
+        ContentListAdapter adapter = (ContentListAdapter) mListView.getAdapter();
+        SmbFile selectedFile = adapter.getItem(itemIndex);
+        UiHelpers uiHelpers = new UiHelpers(adapter);
 
         switch ((String) item.getTitle()) {
             case Constants.DIALOG_TEXT_DELETE:
-                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, selectedFile);
+                uiHelpers.showDeleteConfirmationDialog(MainActivity.this, mAuth, selectedFile);
                 break;
             case Constants.DIALOG_TEXT_RENAME:
                 uiHelpers.showFileRenameDialog(MainActivity.this, mAuth, selectedFile);
                 break;
             case Constants.DIALOG_TEXT_MOVE:
                 new FileRenameTask(
-                        getApplicationContext(), mAuth, selectedFile, null).execute();
+                        getApplicationContext(), mAuth, adapter, selectedFile, null).execute();
                 break;
         }
         return super.onContextItemSelected(item);
@@ -155,5 +115,32 @@ public class MainActivity extends AppCompatActivity implements ListView.OnItemCl
         menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_MOVE);
         menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_RENAME);
         menu.add(0, v.getId(), 0, Constants.DIALOG_TEXT_DELETE);
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (!mSambaHostAddress.endsWith("/")) {
+            mSambaHostAddress = mSambaHostAddress + "/";
+        }
+
+        if (!mSambaHostAddress.equals(AppGlobals.getCurrentBrowsedLocation())) {
+
+            if (!Helpers.isWifiConnected(getApplicationContext())) {
+                UiHelpers.showWifiNotConnectedDialog(MainActivity.this, false);
+                return;
+            }
+
+            try {
+                SmbFile file = new SmbFile(AppGlobals.getCurrentBrowsedLocation(), mAuth);
+                String parent = file.getParent();
+                new BrowseDirectoryTask(
+                        MainActivity.this, parent, mAuth, mListView).execute();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            super.onBackPressed();
+        }
     }
 }

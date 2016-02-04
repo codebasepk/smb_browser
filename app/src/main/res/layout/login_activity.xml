@@ -18,6 +18,7 @@
         android:id="@+id/host_address_entry"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="smb://"
         android:hint="Enter host address" />
     </android.support.design.widget.TextInputLayout>
 

@@ -19,14 +19,17 @@ public class UiHelpers implements AlertDialog.OnClickListener {
 
     private SmbFile mFileToDelete;
     private EditText mFileNameField;
+    private NtlmPasswordAuthentication mAuth;
     private ContentListAdapter mListAdapter;
 
     public UiHelpers(ContentListAdapter listAdapter) {
-        this.mListAdapter = listAdapter;
+        mListAdapter = listAdapter;
     }
 
-    public void showDeleteConfirmationDialog(Activity context, SmbFile fileToDelete) {
+    public void showDeleteConfirmationDialog(Activity context, NtlmPasswordAuthentication auth,
+                                             SmbFile fileToDelete) {
         mFileToDelete = fileToDelete;
+        mAuth = auth;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setIcon(R.mipmap.ic_launcher);
@@ -49,7 +52,9 @@ public class UiHelpers implements AlertDialog.OnClickListener {
             case DialogInterface.BUTTON_POSITIVE:
                 // Delete the file and dismiss the dialog.
                 try {
+                    String filename = mFileToDelete.getName();
                     mFileToDelete.delete();
+                    Helpers.createFileLog(mAuth, filename, Helpers.getDeletedLogLocation());
                     removeItemFromAdapter(mListAdapter, mFileToDelete);
                 } catch (SmbException e) {
                     e.printStackTrace();
@@ -66,6 +71,7 @@ public class UiHelpers implements AlertDialog.OnClickListener {
                                      final SmbFile fileToRename) {
         mFileNameField = new EditText(activity);
         mFileNameField.setText(fileToRename.getName());
+        mFileNameField.setSelection(fileToRename.getName().length());
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle(Constants.DIALOG_TEXT_RENAME);
@@ -74,19 +80,38 @@ public class UiHelpers implements AlertDialog.OnClickListener {
         builder.setMessage("Type in the new name");
         builder.setPositiveButton(Constants.DIALOG_TEXT_RENAME,
                 new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                new FileRenameTask(
-                        activity.getApplicationContext(), auth,
-                        fileToRename, mFileNameField.getText().toString()).execute();
-            }
-        });
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new FileRenameTask(
+                                activity.getApplicationContext(), auth, mListAdapter,
+                                fileToRename, mFileNameField.getText().toString()).execute();
+                    }
+                });
         builder.setNegativeButton("Cancel", this);
         builder.create();
         builder.show();
     }
 
-    private void removeItemFromAdapter(ContentListAdapter adapter, SmbFile smbFile) {
+    public static void showWifiNotConnectedDialog(final Activity activity, final boolean finish) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setIcon(R.mipmap.ic_launcher);
+        builder.setTitle("Wifi not connected");
+        builder.setMessage(
+                "Please ensure wifi is enabled and on the same network as your Samba host.");
+        builder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if (finish) {
+                    activity.finish();
+                }
+            }
+        });
+        builder.create();
+        builder.show();
+    }
+
+    public static void removeItemFromAdapter(ContentListAdapter adapter, SmbFile smbFile) {
         adapter.remove(smbFile);
         adapter.notifyDataSetChanged();
     }

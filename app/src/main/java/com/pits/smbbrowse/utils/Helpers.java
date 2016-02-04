@@ -1,7 +1,14 @@
 package com.pits.smbbrowse.utils;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
@@ -39,5 +46,70 @@ public class Helpers {
             e.printStackTrace();
         }
         return sizeInMbs > sizeConstraint;
+    }
+
+    public static boolean isWifiConnected(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+    public static boolean isValidIp(String ip) {
+        Pattern pattern = Pattern.compile(Constants.IP_ADDRESS_PATTERN);
+        Matcher matcher = pattern.matcher(ip);
+        return matcher.matches();
+    }
+
+    public static String getIpFromSambaUrl(String url) {
+        String stripped = url.substring(Constants.HOST_PREFIX.length());
+        int forwardSlashCount = getCharacterRepetitionCount("/");
+        if (forwardSlashCount == 0) {
+            return stripped;
+        } else {
+            return stripped.split("/")[0];
+        }
+    }
+
+    public static int getCharacterRepetitionCount(String text) {
+        int count = 0;
+        for (char c: text.toCharArray()) {
+            if (c == '/') {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public static void createFileLog(NtlmPasswordAuthentication auth, String filename,
+                                     String location) {
+
+        try {
+            String newFile = location + changeFileExtension(filename);
+            SmbFile logFile = new SmbFile(newFile, auth);
+            System.out.println(newFile);
+            logFile.createNewFile();
+        } catch (MalformedURLException | SmbException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getDeletedLogLocation() {
+        return AppGlobals.getSambaHostAddress() + Constants.DIRECTORY_DELETE_LOG + "/";
+    }
+
+    public static String getRenamedLogLocation() {
+        return AppGlobals.getSambaHostAddress() + Constants.DIRECTORY_RENAME_LOG + "/";
+    }
+
+    private static String changeFileExtension(String filename) {
+        String nameWithoutExtension;
+        if (filename.contains(".")) {
+            // there is an extension
+            nameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
+        } else {
+            nameWithoutExtension = filename;
+        }
+        return nameWithoutExtension + ".txt";
     }
 }
