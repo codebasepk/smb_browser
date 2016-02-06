@@ -3,8 +3,8 @@ package com.pits.smbbrowse.tasks;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import com.jcraft.jsch.JSchException;
 import com.pits.smbbrowse.adapters.ContentListAdapter;
-import com.pits.smbbrowse.utils.AppGlobals;
 import com.pits.smbbrowse.utils.Constants;
 import com.pits.smbbrowse.utils.Helpers;
 import com.pits.smbbrowse.utils.UiHelpers;
@@ -40,19 +40,20 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
         String doneMessage;
         if (mNewName == null) {
             // Its a file MOVE request
-            String moved_directory;
-            String smbHost = AppGlobals.getSambaHostAddress();
-            if (!smbHost.endsWith("/")) {
-                moved_directory = smbHost + "/" + Constants.DIRECTORY_MOVED;
-            } else {
-                moved_directory = smbHost + Constants.DIRECTORY_MOVED;
-            }
-            String newLocationAbs = moved_directory + "/" + mFileToRename.getName();
-            SmbFile newFile = reallyRenameFile(newLocationAbs, false);
-            if (newFile == null) {
+            String pathCanonical = mFileToRename.getCanonicalPath();
+            String server = mFileToRename.getServer();
+            String relativePath = pathCanonical.substring(
+                    (Constants.HOST_PREFIX + server + "/").length());
+            String fileSystemPath = Constants.DIRECTORY_ROOT + relativePath;
+
+            String command = String.format("mv %s %s", fileSystemPath, Constants.LOCATION_MOVED);
+            try {
+                System.out.println(command);
+                Helpers.runRemoteCommand(command);
+                doneMessage = String.format("Moved to %s", Constants.LOCATION_MOVED);
+            } catch (JSchException e) {
+                e.printStackTrace();
                 doneMessage = "Operation failed";
-            } else {
-                doneMessage = String.format("Moved to %s", newFile.getCanonicalPath());
             }
         } else {
             // Its a rename request
@@ -88,8 +89,9 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
             mNewFile = new SmbFile(newPath, mAuth);
             mFileToRename.renameTo(mNewFile);
             if (log) {
-                Helpers.createFileLog(
-                        mAuth, mFileToRename.getName(), Helpers.getRenamedLogLocation());
+                String logFileName = Helpers.changeFileExtension(mFileToRename.getName());
+                String command = "touch " + Constants.LOCATION_RENAME_LOG + logFileName;
+                new RemoteCommandTask().execute(command);
             }
         } catch (MalformedURLException | SmbException e) {
             e.printStackTrace();

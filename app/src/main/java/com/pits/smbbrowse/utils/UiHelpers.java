@@ -10,6 +10,7 @@ import android.widget.Toast;
 import com.pits.smbbrowse.R;
 import com.pits.smbbrowse.adapters.ContentListAdapter;
 import com.pits.smbbrowse.tasks.FileRenameTask;
+import com.pits.smbbrowse.tasks.RemoteCommandTask;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
@@ -54,7 +55,9 @@ public class UiHelpers implements AlertDialog.OnClickListener {
                 try {
                     String filename = mFileToDelete.getName();
                     mFileToDelete.delete();
-                    Helpers.createFileLog(mAuth, filename, Helpers.getDeletedLogLocation());
+                    String logFileName = Helpers.changeFileExtension(filename);
+                    String command = "touch " + Constants.LOCATION_DELETE_LOG + logFileName;
+                    new RemoteCommandTask().execute(command);
                     removeItemFromAdapter(mListAdapter, mFileToDelete);
                 } catch (SmbException e) {
                     e.printStackTrace();
