@@ -61,16 +61,18 @@ public class BrowseDirectoryTask extends AsyncTask<Void, Void, ContentListAdapte
     @Override
     protected void onPostExecute(final ContentListAdapter contentListAdapter) {
         super.onPostExecute(contentListAdapter);
-        mSwipeActionAdapter = new SwipeActionAdapter(contentListAdapter);
-        mItemsListView.setAdapter(mSwipeActionAdapter);
-        AppGlobals.setCurrentBrowsedLocation(mSambaShareAddress);
-        mSwipeActionAdapter.addBackground(
-                SwipeDirection.DIRECTION_NORMAL_LEFT, R.layout.row_bg_left);
-        mSwipeActionAdapter.addBackground(
-                SwipeDirection.DIRECTION_NORMAL_RIGHT, R.layout.row_bg_right);
-        mSwipeActionAdapter.setListView(mItemsListView);
-        mSwipeActionAdapter.setSwipeActionListener(this);
-        mItemsListView.setOnItemLongClickListener(this);
+        if (contentListAdapter != null) {
+            mSwipeActionAdapter = new SwipeActionAdapter(contentListAdapter);
+            mItemsListView.setAdapter(mSwipeActionAdapter);
+            AppGlobals.setCurrentBrowsedLocation(mSambaShareAddress);
+            mSwipeActionAdapter.addBackground(
+                    SwipeDirection.DIRECTION_NORMAL_LEFT, R.layout.row_bg_left);
+            mSwipeActionAdapter.addBackground(
+                    SwipeDirection.DIRECTION_NORMAL_RIGHT, R.layout.row_bg_right);
+            mSwipeActionAdapter.setListView(mItemsListView);
+            mSwipeActionAdapter.setSwipeActionListener(this);
+            mItemsListView.setOnItemLongClickListener(this);
+        }
     }
 
     @Override

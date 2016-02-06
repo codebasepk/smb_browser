@@ -3,10 +3,18 @@ package com.pits.smbbrowse.utils;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.WorkerThread;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+
+import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,7 +95,6 @@ public class Helpers {
         try {
             String newFile = location + changeFileExtension(filename);
             SmbFile logFile = new SmbFile(newFile, auth);
-            System.out.println(newFile);
             logFile.createNewFile();
         } catch (MalformedURLException | SmbException e) {
             e.printStackTrace();
@@ -102,7 +109,7 @@ public class Helpers {
         return AppGlobals.getSambaHostAddress() + Constants.DIRECTORY_RENAME_LOG + "/";
     }
 
-    private static String changeFileExtension(String filename) {
+    public static String changeFileExtension(String filename) {
         String nameWithoutExtension;
         if (filename.contains(".")) {
             // there is an extension
@@ -111,5 +118,31 @@ public class Helpers {
             nameWithoutExtension = filename;
         }
         return nameWithoutExtension + ".txt";
+    }
+
+    @WorkerThread
+    public static void runRemoteCommand(String command) throws JSchException {
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(
+                Constants.REMOTE_USER,
+                Constants.REMOTE_HOST,
+                Constants.REMOTE_PORT
+        );
+        session.setPassword(Constants.REMOTE_PASS);
+
+        // Avoid asking for key confirmation
+        Properties prop = new Properties();
+        prop.put("StrictHostKeyChecking", "no");
+        session.setConfig(prop);
+        session.connect();
+
+        ChannelExec channelSsh = (ChannelExec) session.openChannel("exec");
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        channelSsh.setOutputStream(byteArrayOutputStream);
+
+        // Execute command
+        channelSsh.setCommand(command);
+        channelSsh.connect();
+        channelSsh.disconnect();
     }
 }
