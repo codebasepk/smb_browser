@@ -141,7 +141,9 @@ public class Helpers {
         channelSsh.setOutputStream(byteArrayOutputStream);
 
         // Execute command
-        channelSsh.setCommand(command);
+        String debugCommand = String.format("%s > %s 2>&1", command, "/volume1/stdout.txt");
+
+        channelSsh.setCommand(debugCommand);
         channelSsh.connect();
         channelSsh.disconnect();
     }
