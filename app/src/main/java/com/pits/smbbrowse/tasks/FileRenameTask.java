@@ -46,9 +46,9 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
                     (Constants.HOST_PREFIX + server + "/").length());
             String fileSystemPath = Constants.DIRECTORY_ROOT + relativePath;
 
-            String command = String.format("mv %s %s", fileSystemPath, Constants.LOCATION_MOVED);
+            String command = String.format(
+                    "mv \"%s\" \"%s\"", fileSystemPath, Constants.LOCATION_MOVED);
             try {
-                System.out.println(command);
                 Helpers.runRemoteCommand(command);
                 doneMessage = String.format("Moved to %s", Constants.LOCATION_MOVED);
             } catch (JSchException e) {
@@ -90,7 +90,8 @@ public class FileRenameTask extends AsyncTask<Void, Void, String> {
             mFileToRename.renameTo(mNewFile);
             if (log) {
                 String logFileName = Helpers.changeFileExtension(mFileToRename.getName());
-                String command = "touch " + Constants.LOCATION_RENAME_LOG + logFileName;
+                String command = String.format(
+                        "touch \"%s\"", Constants.LOCATION_RENAME_LOG + logFileName);
                 new RemoteCommandTask().execute(command);
             }
         } catch (MalformedURLException | SmbException e) {

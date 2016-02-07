@@ -56,7 +56,8 @@ public class UiHelpers implements AlertDialog.OnClickListener {
                     String filename = mFileToDelete.getName();
                     mFileToDelete.delete();
                     String logFileName = Helpers.changeFileExtension(filename);
-                    String command = "touch " + Constants.LOCATION_DELETE_LOG + logFileName;
+                    String command = String.format(
+                            "touch \"%s\"", Constants.LOCATION_DELETE_LOG + logFileName);
                     new RemoteCommandTask().execute(command);
                     removeItemFromAdapter(mListAdapter, mFileToDelete);
                 } catch (SmbException e) {
