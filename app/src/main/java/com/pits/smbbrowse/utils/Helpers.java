@@ -146,5 +146,7 @@ public class Helpers {
         channelSsh.setCommand(debugCommand);
         channelSsh.connect();
         channelSsh.disconnect();
+
+        System.out.println(byteArrayOutputStream.toString());
     }
 }
